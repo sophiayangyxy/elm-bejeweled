@@ -1,6 +1,8 @@
 # Elm-Bejeweled
 An Elm implementation of the classic game Bejeweled.
 
+![alt tag](img/gameplay.png)
+
 ## Build instructions:
 1. Install Elm (http://elm-lang.org/install)
 2. Clone this repo onto your local machine and cd into the directory
