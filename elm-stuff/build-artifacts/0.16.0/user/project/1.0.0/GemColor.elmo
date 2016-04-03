@@ -1,0 +1,72 @@
+Elm.GemColor = Elm.GemColor || {};
+Elm.GemColor.make = function (_elm) {
+   "use strict";
+   _elm.GemColor = _elm.GemColor || {};
+   if (_elm.GemColor.values) return _elm.GemColor.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Color = Elm.Color.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm),
+   $Time = Elm.Time.make(_elm);
+   var _op = {};
+   var toColor = function (c) {
+      var _p0 = c;
+      switch (_p0.ctor)
+      {case "Red": return $Color.red;
+         case "Orange": return $Color.orange;
+         case "Yellow": return $Color.yellow;
+         case "Green": return $Color.green;
+         case "Blue": return $Color.blue;
+         case "Purple": return $Color.purple;
+         default: return $Color.grey;}
+   };
+   var toSrc = function (c) {
+      var _p1 = c;
+      switch (_p1.ctor)
+      {case "Red": return "ruby.jpg";
+         case "Orange": return "topaz.png";
+         case "Yellow": return "tourmaline.png";
+         case "Green": return "emerald.png";
+         case "Blue": return "sapphire.png";
+         case "Purple": return "amethyst.jpg";
+         default: return "opal.png";}
+   };
+   var numColors = 7;
+   var Grey = {ctor: "Grey"};
+   var Purple = {ctor: "Purple"};
+   var Blue = {ctor: "Blue"};
+   var Green = {ctor: "Green"};
+   var Yellow = {ctor: "Yellow"};
+   var Orange = {ctor: "Orange"};
+   var Red = {ctor: "Red"};
+   var getColor = function (i) {
+      var _p2 = i;
+      switch (_p2)
+      {case 0: return Red;
+         case 1: return Orange;
+         case 2: return Yellow;
+         case 3: return Green;
+         case 4: return Blue;
+         case 5: return Purple;
+         case 6: return Grey;
+         default: return _U.crashCase("GemColor",{start: {line: 40,column: 5},end: {line: 48,column: 56}},_p2)("getColor: index out of bound");}
+   };
+   var getRandomColor = function (time) {    return getColor(A2($Basics._op["%"],$Basics.round(time),numColors));};
+   return _elm.GemColor.values = {_op: _op
+                                 ,Red: Red
+                                 ,Orange: Orange
+                                 ,Yellow: Yellow
+                                 ,Green: Green
+                                 ,Blue: Blue
+                                 ,Purple: Purple
+                                 ,Grey: Grey
+                                 ,numColors: numColors
+                                 ,toSrc: toSrc
+                                 ,toColor: toColor
+                                 ,getRandomColor: getRandomColor
+                                 ,getColor: getColor};
+};

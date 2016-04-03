@@ -1,0 +1,158 @@
+Elm.Bejeweled = Elm.Bejeweled || {};
+Elm.Bejeweled.make = function (_elm) {
+   "use strict";
+   _elm.Bejeweled = _elm.Bejeweled || {};
+   if (_elm.Bejeweled.values) return _elm.Bejeweled.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Array = Elm.Array.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Board = Elm.Board.make(_elm),
+   $Control = Elm.Control.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $Graphics$Element = Elm.Graphics.Element.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Random = Elm.Random.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm),
+   $Time = Elm.Time.make(_elm),
+   $Window = Elm.Window.make(_elm);
+   var _op = {};
+   var newestCrushTimeHelper = F2(function (xs,t) {
+      newestCrushTimeHelper: while (true) {
+         var _p0 = xs;
+         if (_p0.ctor === "[]") {
+               return t;
+            } else {
+               var _p2 = _p0._1;
+               var _p1 = _p0._0._1;
+               if (_U.cmp(_p1,t) > 0) {
+                     var _v1 = _p2,_v2 = _p1;
+                     xs = _v1;
+                     t = _v2;
+                     continue newestCrushTimeHelper;
+                  } else {
+                     var _v3 = _p2,_v4 = t;
+                     xs = _v3;
+                     t = _v4;
+                     continue newestCrushTimeHelper;
+                  }
+            }
+      }
+   });
+   var newestCrushTime = function (xs) {    return A2(newestCrushTimeHelper,xs,$Board.noCrushHappening);};
+   var pruneOld = F2(function (now,_p3) {
+      var _p4 = _p3;
+      var _p6 = _p4._1;
+      var _p5 = _p4._0;
+      var n = newestCrushTime($Array.toList(_p5));
+      var timeElapsed = now - n;
+      if (_U.cmp(timeElapsed,$Board.tCrush) < 0) return {ctor: "_Tuple2",_0: _p5,_1: _p6}; else if ($Control.allGone(_p5)) {
+               var nb = A2($Control.generateRandomBoard,$Random.initialSeed($Basics.round(now)),_p5);
+               return {ctor: "_Tuple2",_0: nb,_1: _p6};
+            } else if ($Control.isHintedBoard(_p5)) {
+                  var nb = A2($Control.clear,false,_p5);
+                  return {ctor: "_Tuple2",_0: nb,_1: _p6};
+               } else if (_U.eq(n,$Board.noCrushHappening)) return $Basics.not(A2($Control.hasMoves,0,_p5)) ? {ctor: "_Tuple2"
+                                                                                                              ,_0: A2($Control.clearWithTime,now,_p5)
+                                                                                                              ,_1: _p6} : {ctor: "_Tuple2",_0: _p5,_1: _p6};
+               else {
+                     var nb = A2($Control.updateBoard,now,_p5);
+                     return A2($Control.rinseAndRepeat,now,{ctor: "_Tuple2",_0: nb,_1: _p6});
+                  }
+   });
+   var upstate = F2(function (u,_p7) {
+      var _p8 = _p7;
+      var _p21 = _p8._1._0._1;
+      var _p20 = _p8._0._1;
+      var _p19 = _p8._1._1;
+      var _p18 = _p8._1._0._0;
+      var _p9 = u;
+      if (_p9.ctor === "NewClick") {
+            var _p15 = _p9._0._0;
+            var _p14 = _p9._0._1;
+            var timeRem = A2($Board.timeRemaining,_p15,_p20);
+            var n = newestCrushTime($Array.toList(_p18));
+            var timeElapsed = _p15 - n;
+            var numClicked = $Control.getNumClicked($Array.toIndexedList(_p18));
+            if (_U.eq(_p14,$Board.restartIndex)) {
+                  var randomBoard = A2($Control.generateRandomBoard,$Random.initialSeed($Basics.round(_p15)),_p18);
+                  return {ctor: "_Tuple2",_0: {ctor: "_Tuple2",_0: _p15,_1: _p15},_1: {ctor: "_Tuple2",_0: {ctor: "_Tuple2",_0: randomBoard,_1: 0},_1: _p19}};
+               } else if (_U.cmp(timeRem,0) < 1) {
+                     var newHighScore = A2($Basics.max,_p21,_p19);
+                     return {ctor: "_Tuple2"
+                            ,_0: {ctor: "_Tuple2",_0: _p15,_1: _p20}
+                            ,_1: {ctor: "_Tuple2",_0: {ctor: "_Tuple2",_0: _p18,_1: _p21},_1: newHighScore}};
+                  } else if (!_U.eq(n,$Board.noCrushHappening) && _U.cmp(timeElapsed,$Board.tCrush) < 0) return {ctor: "_Tuple2"
+                                                                                                                ,_0: {ctor: "_Tuple2",_0: _p15,_1: _p20}
+                                                                                                                ,_1: {ctor: "_Tuple2"
+                                                                                                                     ,_0: {ctor: "_Tuple2",_0: _p18,_1: _p21}
+                                                                                                                     ,_1: _p19}}; else if (_U.eq(_p14,
+                     $Board.hintIndex)) {
+                           var _p10 = A2($Control.checkForHints,_p15,{ctor: "_Tuple2",_0: _p18,_1: _p21});
+                           var b = _p10._0;
+                           var s = _p10._1;
+                           return {ctor: "_Tuple2",_0: {ctor: "_Tuple2",_0: _p15,_1: _p20},_1: {ctor: "_Tuple2",_0: {ctor: "_Tuple2",_0: b,_1: s},_1: _p19}};
+                        } else if (_U.eq(numClicked,-1)) {
+                              var _p11 = A2($Control.mustGem,_p14,_p18);
+                              var col = _p11._0;
+                              var b = _p11._1;
+                              return {ctor: "_Tuple2"
+                                     ,_0: {ctor: "_Tuple2",_0: _p15,_1: _p20}
+                                     ,_1: {ctor: "_Tuple2",_0: {ctor: "_Tuple2",_0: A2($Control.markAsClicked,_p14,_p18),_1: _p21},_1: _p19}};
+                           } else if ($Basics.not(A2($Control.isNeighbor,_p14,numClicked))) return {ctor: "_Tuple2"
+                                                                                                   ,_0: {ctor: "_Tuple2",_0: _p15,_1: _p20}
+                                                                                                   ,_1: {ctor: "_Tuple2"
+                                                                                                        ,_0: {ctor: "_Tuple2"
+                                                                                                             ,_0: A2($Control.clear,false,_p18)
+                                                                                                             ,_1: _p21}
+                                                                                                        ,_1: _p19}}; else {
+                                 var newBoard = A2($Control.markAsClicked,_p14,A3($Control.swap,_p14,numClicked,_p18));
+                                 var _p12 = A4($Control.checkAndUpdateBoard,_p15,_p14,numClicked,{ctor: "_Tuple2",_0: newBoard,_1: _p21});
+                                 var brd = _p12._0;
+                                 var s = _p12._1;
+                                 var _p13 = A2($Control.mustGem,_p14,_p18);
+                                 var col = _p13._0;
+                                 var b = _p13._1;
+                                 return {ctor: "_Tuple2"
+                                        ,_0: {ctor: "_Tuple2",_0: _p15,_1: _p20}
+                                        ,_1: {ctor: "_Tuple2",_0: {ctor: "_Tuple2",_0: brd,_1: s},_1: _p19}};
+                              }
+         } else {
+            var _p17 = _p9._0;
+            var timeRem = A2($Board.timeRemaining,_p17,_p20);
+            var _p16 = A2(pruneOld,_p17,{ctor: "_Tuple2",_0: _p18,_1: _p21});
+            var newBoard = _p16._0;
+            var newScore = _p16._1;
+            if (_U.cmp(timeRem,0) < 1) {
+                  var newHighScore = A2($Basics.max,_p21,_p19);
+                  return {ctor: "_Tuple2"
+                         ,_0: {ctor: "_Tuple2",_0: _p17,_1: _p20}
+                         ,_1: {ctor: "_Tuple2",_0: {ctor: "_Tuple2",_0: newBoard,_1: _p21},_1: newHighScore}};
+               } else return {ctor: "_Tuple2"
+                             ,_0: {ctor: "_Tuple2",_0: _p17,_1: _p20}
+                             ,_1: {ctor: "_Tuple2",_0: {ctor: "_Tuple2",_0: newBoard,_1: newScore},_1: _p19}};
+         }
+   });
+   var state = function () {
+      var _p22 = $Board.initState;
+      var t = _p22._0._0;
+      var rst = _p22._0._1;
+      var ib = _p22._1._0._0;
+      var s = _p22._1._0._1;
+      var hs = _p22._1._1;
+      var rb = A2($Control.generateRandomBoard,$Random.initialSeed($Board.seed0),ib);
+      return A3($Signal.foldp,
+      upstate,
+      {ctor: "_Tuple2",_0: {ctor: "_Tuple2",_0: 0,_1: 0},_1: {ctor: "_Tuple2",_0: {ctor: "_Tuple2",_0: rb,_1: 0},_1: 0}},
+      A2($Signal.merge,A2($Signal.map,$Board.NewTime,$Board.time),A2($Signal.map,$Board.NewClick,$Board.clicks)));
+   }();
+   var main = A3($Signal.map2,$Board.view,$Window.dimensions,state);
+   return _elm.Bejeweled.values = {_op: _op
+                                  ,upstate: upstate
+                                  ,newestCrushTime: newestCrushTime
+                                  ,newestCrushTimeHelper: newestCrushTimeHelper
+                                  ,pruneOld: pruneOld
+                                  ,state: state
+                                  ,main: main};
+};

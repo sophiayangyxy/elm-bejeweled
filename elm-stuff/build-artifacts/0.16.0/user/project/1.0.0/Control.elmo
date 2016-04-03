@@ -1,0 +1,484 @@
+Elm.Control = Elm.Control || {};
+Elm.Control.make = function (_elm) {
+   "use strict";
+   _elm.Control = _elm.Control || {};
+   if (_elm.Control.values) return _elm.Control.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Array = Elm.Array.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Board = Elm.Board.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $GemColor = Elm.GemColor.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Random = Elm.Random.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Set = Elm.Set.make(_elm),
+   $Signal = Elm.Signal.make(_elm),
+   $Time = Elm.Time.make(_elm);
+   var _op = {};
+   var isNeighbor = F2(function (i,j) {
+      var j2 = A2($Basics._op["%"],j,$Board.boardWidth);
+      var j1 = j / $Board.boardWidth | 0;
+      var i2 = A2($Basics._op["%"],i,$Board.boardWidth);
+      var i1 = i / $Board.boardWidth | 0;
+      return _U.eq(i1,j1) && _U.eq($Basics.abs(i2 - j2),1) || _U.eq(i2,j2) && _U.eq($Basics.abs(i1 - j1),1);
+   });
+   var mustGem = F2(function (i,brd) {
+      var gem = A2($Array.get,i,brd);
+      var _p0 = gem;
+      if (_p0.ctor === "Nothing") {
+            return _U.crashCase("Control",{start: {line: 25,column: 5},end: {line: 27,column: 24}},_p0)("mustGem: impossible");
+         } else {
+            return _p0._0;
+         }
+   });
+   var markAsClicked = F2(function (i,brd) {
+      var _p2 = A2(mustGem,i,brd);
+      var c = _p2._0;
+      var b = _p2._1;
+      return _U.cmp(b,0) > -1 ? _U.crash("Control",{start: {line: 33,column: 9},end: {line: 33,column: 20}})("markAsClicked: already crushed") : A3($Array.set,
+      i,
+      {ctor: "_Tuple2",_0: c,_1: -2},
+      brd);
+   });
+   var markAsNeutral = F2(function (i,brd) {
+      var _p3 = A2(mustGem,i,brd);
+      var c = _p3._0;
+      var b = _p3._1;
+      return A3($Array.set,i,{ctor: "_Tuple2",_0: c,_1: -1},brd);
+   });
+   var clear = F2(function (clicked,brd) {
+      var foo = F3(function (clicked,i,brd) {
+         foo: while (true) {
+            var total = $Board.boardWidth * $Board.boardWidth;
+            if (_U.cmp(i,total) > -1) return brd; else if (clicked) {
+                     var _v1 = clicked,_v2 = i + 1,_v3 = A2(markAsClicked,i,brd);
+                     clicked = _v1;
+                     i = _v2;
+                     brd = _v3;
+                     continue foo;
+                  } else {
+                     var _v4 = clicked,_v5 = i + 1,_v6 = A2(markAsNeutral,i,brd);
+                     clicked = _v4;
+                     i = _v5;
+                     brd = _v6;
+                     continue foo;
+                  }
+         }
+      });
+      return A3(foo,clicked,0,brd);
+   });
+   var clearWithTime = F2(function (t,brd) {
+      var foo = F3(function (t,i,b) {
+         foo: while (true) {
+            var total = $Board.boardWidth * $Board.boardWidth;
+            if (_U.cmp(i,total) > -1) return b; else {
+                  var _p4 = A2(mustGem,i,b);
+                  var gc = _p4._0;
+                  var gt = _p4._1;
+                  var _v7 = t,_v8 = i + 1,_v9 = A3($Array.set,i,{ctor: "_Tuple2",_0: gc,_1: t},b);
+                  t = _v7;
+                  i = _v8;
+                  b = _v9;
+                  continue foo;
+               }
+         }
+      });
+      return A3(foo,t,0,brd);
+   });
+   var allGone = function (brd) {
+      var total = $Board.boardWidth * $Board.boardWidth;
+      var foo = function (i) {
+         foo: while (true) if (_U.cmp(i,total) > -1) return true; else {
+               var _p5 = A2(mustGem,i,brd);
+               var c = _p5._0;
+               var t = _p5._1;
+               if (_U.cmp(t,0) < 0) return false; else {
+                     var _v10 = i + 1;
+                     i = _v10;
+                     continue foo;
+                  }
+            }
+      };
+      return foo(0);
+   };
+   var swap = F3(function (i,j,b) {    return A3($Array.set,j,A2(mustGem,i,b),A3($Array.set,i,A2(mustGem,j,b),b));});
+   var scanH = F4(function (i,j,brd,set) {
+      scanH: while (true) if (_U.cmp(j,$Board.boardWidth) > -1) return _U.cmp($Set.size(set),3) > -1 ? set : $Set.empty; else if (_U.eq(j,0)) {
+               var _v11 = i,_v12 = j + 1,_v13 = brd,_v14 = A2($Set.insert,i * $Board.boardWidth + j,set);
+               i = _v11;
+               j = _v12;
+               brd = _v13;
+               set = _v14;
+               continue scanH;
+            } else {
+               var ind = i * $Board.boardWidth + j;
+               var prevInd = ind - 1;
+               var _p6 = A2(mustGem,prevInd,brd);
+               var prevCol = _p6._0;
+               var prevB = _p6._1;
+               var _p7 = A2(mustGem,ind,brd);
+               var currCol = _p7._0;
+               var currB = _p7._1;
+               if (_U.eq(prevCol,currCol) && A2($Set.member,prevInd,set)) {
+                     var _v15 = i,_v16 = j + 1,_v17 = brd,_v18 = A2($Set.insert,ind,set);
+                     i = _v15;
+                     j = _v16;
+                     brd = _v17;
+                     set = _v18;
+                     continue scanH;
+                  } else if (_U.cmp($Set.size(set),3) > -1) return set; else {
+                        var _v19 = i,_v20 = j + 1,_v21 = brd,_v22 = A2($Set.insert,ind,$Set.empty);
+                        i = _v19;
+                        j = _v20;
+                        brd = _v21;
+                        set = _v22;
+                        continue scanH;
+                     }
+            }
+   });
+   var scanV = F4(function (i,j,brd,set) {
+      scanV: while (true) if (_U.cmp(i,$Board.boardWidth) > -1) return _U.cmp($Set.size(set),3) > -1 ? set : $Set.empty; else if (_U.eq(i,0)) {
+               var _v23 = i + 1,_v24 = j,_v25 = brd,_v26 = A2($Set.insert,i * $Board.boardWidth + j,set);
+               i = _v23;
+               j = _v24;
+               brd = _v25;
+               set = _v26;
+               continue scanV;
+            } else {
+               var prevInd = (i - 1) * $Board.boardWidth + j;
+               var _p8 = A2(mustGem,prevInd,brd);
+               var prevCol = _p8._0;
+               var prevB = _p8._1;
+               var ind = i * $Board.boardWidth + j;
+               var _p9 = A2(mustGem,ind,brd);
+               var currCol = _p9._0;
+               var currB = _p9._1;
+               if (_U.eq(prevCol,currCol) && A2($Set.member,prevInd,set)) {
+                     var _v27 = i + 1,_v28 = j,_v29 = brd,_v30 = A2($Set.insert,ind,set);
+                     i = _v27;
+                     j = _v28;
+                     brd = _v29;
+                     set = _v30;
+                     continue scanV;
+                  } else if (_U.cmp($Set.size(set),3) > -1) return set; else {
+                        var _v31 = i + 1,_v32 = j,_v33 = brd,_v34 = A2($Set.insert,ind,$Set.empty);
+                        i = _v31;
+                        j = _v32;
+                        brd = _v33;
+                        set = _v34;
+                        continue scanV;
+                     }
+            }
+   });
+   var scanBoardForElims = F5(function (time,i,j,set,brd) {
+      scanBoardForElims: while (true) if (_U.cmp(i,$Board.boardWidth) > -1 && _U.cmp(j,$Board.boardWidth) > -1) return set; else if (_U.cmp(i,
+         $Board.boardWidth) > -1) {
+               var newSet = A2($Set.union,set,A4(scanV,0,j,brd,$Set.empty));
+               var _v35 = time,_v36 = i,_v37 = j + 1,_v38 = newSet,_v39 = brd;
+               time = _v35;
+               i = _v36;
+               j = _v37;
+               set = _v38;
+               brd = _v39;
+               continue scanBoardForElims;
+            } else {
+               var newSet = A2($Set.union,set,A4(scanH,i,0,brd,$Set.empty));
+               var _v40 = time,_v41 = i + 1,_v42 = j,_v43 = newSet,_v44 = brd;
+               time = _v40;
+               i = _v41;
+               j = _v42;
+               set = _v43;
+               brd = _v44;
+               continue scanBoardForElims;
+            }
+   });
+   var hasElims = F3(function (i,j,brd) {
+      hasElims: while (true) if (_U.cmp(i,$Board.boardWidth) > -1 && _U.cmp(j,$Board.boardWidth) > -1) return false; else if (_U.cmp(i,$Board.boardWidth) > -1)
+         {
+               var set = A4(scanV,0,j,brd,$Set.empty);
+               if ($Basics.not($Set.isEmpty(set))) return true; else {
+                     var _v45 = i,_v46 = j + 1,_v47 = brd;
+                     i = _v45;
+                     j = _v46;
+                     brd = _v47;
+                     continue hasElims;
+                  }
+            } else {
+               var set = A4(scanH,i,0,brd,$Set.empty);
+               if ($Basics.not($Set.isEmpty(set))) return true; else {
+                     var _v48 = i + 1,_v49 = j,_v50 = brd;
+                     i = _v48;
+                     j = _v49;
+                     brd = _v50;
+                     continue hasElims;
+                  }
+            }
+   });
+   var hasMoves = F2(function (ind,b) {
+      hasMoves: while (true) {
+         var foo = F3(function (i,j,b) {
+            if (_U.cmp(i,$Board.boardWidth - 1) < 0 && _U.cmp(j,$Board.boardWidth - 1) < 0) {
+                  var b2 = A3(swap,ind,ind + $Board.boardWidth,b);
+                  var b1 = A3(swap,ind,ind + 1,b);
+                  return A3(hasElims,0,0,b1) || A3(hasElims,0,0,b2);
+               } else if (_U.cmp(i,$Board.boardWidth - 1) < 0) return A3(hasElims,0,0,A3(swap,ind,ind + $Board.boardWidth,b)); else return A3(hasElims,
+                  0,
+                  0,
+                  A3(swap,ind,ind + 1,b));
+         });
+         var j = A2($Basics._op["%"],ind,$Board.boardWidth);
+         var i = ind / $Board.boardWidth | 0;
+         var total = $Board.boardWidth * $Board.boardWidth - 1;
+         if (_U.eq(ind,total)) return false; else if (A3(foo,i,j,b)) return true; else {
+                  var _v51 = ind + 1,_v52 = b;
+                  ind = _v51;
+                  b = _v52;
+                  continue hasMoves;
+               }
+      }
+   });
+   var generateRandomBoard = F2(function (seed,brd) {
+      var total = $Board.boardWidth * $Board.boardWidth;
+      var foo = F3(function (s,i,b) {
+         foo: while (true) if (_U.cmp(i,total) > -1) {
+               var set = A5(scanBoardForElims,0,0,0,$Set.empty,b);
+               if ($Set.isEmpty(set) && A2(hasMoves,0,b)) return b; else {
+                     var _v53 = s,_v54 = 0,_v55 = b;
+                     s = _v53;
+                     i = _v54;
+                     b = _v55;
+                     continue foo;
+                  }
+            } else {
+               var _p10 = A2($Random.generate,A2($Random.$int,0,$GemColor.numColors - 1),s);
+               var n = _p10._0;
+               var ns = _p10._1;
+               var _v56 = ns,_v57 = i + 1,_v58 = A3($Array.set,i,{ctor: "_Tuple2",_0: $GemColor.getColor(n),_1: -1},b);
+               s = _v56;
+               i = _v57;
+               b = _v58;
+               continue foo;
+            }
+      });
+      return A3(foo,seed,0,brd);
+   });
+   var elimBoard = F3(function (time,list,brd) {
+      elimBoard: while (true) {
+         var _p11 = list;
+         if (_p11.ctor === "[]") {
+               return brd;
+            } else {
+               var _p13 = _p11._0;
+               var _p12 = A2(mustGem,_p13,brd);
+               var c = _p12._0;
+               var b = _p12._1;
+               var _v60 = time,_v61 = _p11._1,_v62 = A3($Array.set,_p13,{ctor: "_Tuple2",_0: c,_1: time},brd);
+               time = _v60;
+               list = _v61;
+               brd = _v62;
+               continue elimBoard;
+            }
+      }
+   });
+   var rinseAndRepeat = F2(function (time,_p14) {
+      var _p15 = _p14;
+      var _p17 = _p15._1;
+      var _p16 = _p15._0;
+      var set = A5(scanBoardForElims,time,0,0,$Set.empty,_p16);
+      if ($Set.isEmpty(set)) return {ctor: "_Tuple2",_0: _p16,_1: _p17}; else {
+            var nb = A3(elimBoard,time,$Set.toList(set),_p16);
+            return {ctor: "_Tuple2",_0: nb,_1: _p17 + $Board.scoreUnit * ($Set.size(set) - 2)};
+         }
+   });
+   var checkAndUpdateBoard = F4(function (time,i,j,_p18) {
+      var _p19 = _p18;
+      var _p21 = _p19._1;
+      var _p20 = _p19._0;
+      var v2 = A2($Basics._op["%"],j,$Board.boardWidth);
+      var v1 = A2($Basics._op["%"],i,$Board.boardWidth);
+      var setV = A2($Set.union,A4(scanV,0,v1,_p20,$Set.empty),A4(scanV,0,v2,_p20,$Set.empty));
+      var h2 = j / $Board.boardWidth | 0;
+      var h1 = i / $Board.boardWidth | 0;
+      var setH = A2($Set.union,A4(scanH,h1,0,_p20,$Set.empty),A4(scanH,h2,0,_p20,$Set.empty));
+      var removeSet = A2($Set.union,setH,setV);
+      if ($Set.isEmpty(removeSet)) {
+            var newBoard = A3(swap,i,j,A2(markAsNeutral,j,A2(markAsNeutral,i,_p20)));
+            return {ctor: "_Tuple2",_0: newBoard,_1: _p21 - $Board.scoreUnit};
+         } else {
+            var newBoard = A3(elimBoard,time,$Set.toList(removeSet),A2(markAsNeutral,j,A2(markAsNeutral,i,_p20)));
+            return {ctor: "_Tuple2",_0: newBoard,_1: _p21 + $Board.scoreUnit * ($Set.size(removeSet) - 2)};
+         }
+   });
+   var getSwapIndex = F3(function (i,j,brd) {
+      getSwapIndex: while (true) if (_U.cmp(i,0) < 0) return $Maybe.Nothing; else {
+            var ind = i * $Board.boardWidth + j;
+            var _p22 = A2(mustGem,ind,brd);
+            var c = _p22._0;
+            var b = _p22._1;
+            if (_U.eq(b,-1)) return $Maybe.Just(ind); else {
+                  var _v65 = i - 1,_v66 = j,_v67 = brd;
+                  i = _v65;
+                  j = _v66;
+                  brd = _v67;
+                  continue getSwapIndex;
+               }
+         }
+   });
+   var flowDownOrRandom = F4(function (time,i,j,brd) {
+      var ind = i * $Board.boardWidth + j;
+      var col = A2($Basics._op["%"],j,$Board.boardWidth);
+      var row = i - 1;
+      var maybeIndex = A3(getSwapIndex,row,col,brd);
+      var _p23 = maybeIndex;
+      if (_p23.ctor === "Nothing") {
+            var _p24 = {ctor: "_Tuple2",_0: $GemColor.getRandomColor(time),_1: -1};
+            var c = _p24._0;
+            var b = _p24._1;
+            return A3($Array.set,ind,{ctor: "_Tuple2",_0: c,_1: -1},brd);
+         } else {
+            return A3(swap,_p23._0,ind,brd);
+         }
+   });
+   var scanUp = F4(function (time,i,j,brd) {
+      scanUp: while (true) if (_U.cmp(i,0) < 0) return brd; else if (_U.cmp(j,$Board.boardWidth) > -1) {
+               var _v69 = time,_v70 = i - 1,_v71 = 0,_v72 = brd;
+               time = _v69;
+               i = _v70;
+               j = _v71;
+               brd = _v72;
+               continue scanUp;
+            } else {
+               var ind = i * $Board.boardWidth + j;
+               var _p25 = A2(mustGem,ind,brd);
+               var col = _p25._0;
+               var b = _p25._1;
+               if (_U.eq(b,-1)) {
+                     var _v73 = time,_v74 = i,_v75 = j + 1,_v76 = brd;
+                     time = _v73;
+                     i = _v74;
+                     j = _v75;
+                     brd = _v76;
+                     continue scanUp;
+                  } else {
+                     var _v77 = time + 1,_v78 = i,_v79 = j + 1,_v80 = A4(flowDownOrRandom,time,i,j,brd);
+                     time = _v77;
+                     i = _v78;
+                     j = _v79;
+                     brd = _v80;
+                     continue scanUp;
+                  }
+            }
+   });
+   var updateBoard = F2(function (time,brd) {    return A4(scanUp,time,$Board.boardWidth - 1,0,brd);});
+   var isHintedBoard = function (b) {
+      var foo = function (i) {
+         foo: while (true) if (_U.cmp(i,$Board.boardWidth * $Board.boardWidth) > -1) return 0; else {
+               var _p26 = A2(mustGem,i,b);
+               var c = _p26._0;
+               var t = _p26._1;
+               if (_U.cmp(t,0) > 0) return 1 + foo(i + 1); else {
+                     var _v81 = i + 1;
+                     i = _v81;
+                     continue foo;
+                  }
+            }
+      };
+      return _U.eq(foo(0),2) ? true : false;
+   };
+   var markGemsAsHints = F4(function (t,i1,i2,brd) {
+      var _p27 = A2(mustGem,i2,brd);
+      var c2 = _p27._0;
+      var t2 = _p27._1;
+      var _p28 = A2(mustGem,i1,brd);
+      var c1 = _p28._0;
+      var t1 = _p28._1;
+      return A3($Array.set,i2,{ctor: "_Tuple2",_0: c2,_1: t},A3($Array.set,i1,{ctor: "_Tuple2",_0: c1,_1: t},brd));
+   });
+   var checkForHints = F2(function (t,_p29) {
+      var _p30 = _p29;
+      var _p31 = _p30._1;
+      var foo = F2(function (ind,brd) {
+         foo: while (true) if (_U.cmp(ind,$Board.boardWidth * $Board.boardWidth - 1) > -1) return {ctor: "_Tuple2",_0: brd,_1: _p31}; else {
+               var j = A2($Basics._op["%"],ind,$Board.boardWidth);
+               var i = ind / $Board.boardWidth | 0;
+               if (_U.cmp(i,$Board.boardWidth - 1) < 0 && _U.cmp(j,$Board.boardWidth - 1) < 0) {
+                     var b2 = A3(swap,ind,ind + $Board.boardWidth,brd);
+                     var b1 = A3(swap,ind,ind + 1,brd);
+                     if (A3(hasElims,0,0,b1)) return {ctor: "_Tuple2",_0: A4(markGemsAsHints,t,ind,ind + 1,brd),_1: _p31 - 2 * $Board.scoreUnit};
+                     else if (A3(hasElims,0,0,b2)) return {ctor: "_Tuple2"
+                                                          ,_0: A4(markGemsAsHints,t,ind,ind + $Board.boardWidth,brd)
+                                                          ,_1: _p31 - 2 * $Board.scoreUnit}; else {
+                              var _v83 = ind + 1,_v84 = brd;
+                              ind = _v83;
+                              brd = _v84;
+                              continue foo;
+                           }
+                  } else if (_U.cmp(i,$Board.boardWidth - 1) < 0) if (A3(hasElims,0,0,A3(swap,ind,ind + $Board.boardWidth,brd))) return {ctor: "_Tuple2"
+                                                                                                                                        ,_0: A4(markGemsAsHints,
+                                                                                                                                        t,
+                                                                                                                                        ind,
+                                                                                                                                        ind + $Board.boardWidth,
+                                                                                                                                        brd)
+                                                                                                                                        ,_1: _p31 - 2 * $Board.scoreUnit};
+                     else {
+                           var _v85 = ind + 1,_v86 = brd;
+                           ind = _v85;
+                           brd = _v86;
+                           continue foo;
+                        } else if (A3(hasElims,0,0,A3(swap,ind,ind + 1,brd))) return {ctor: "_Tuple2"
+                                                                                     ,_0: A4(markGemsAsHints,t,ind,ind + 1,brd)
+                                                                                     ,_1: _p31 - 2 * $Board.scoreUnit}; else {
+                           var _v87 = ind + 1,_v88 = brd;
+                           ind = _v87;
+                           brd = _v88;
+                           continue foo;
+                        }
+            }
+      });
+      return A2(foo,0,_p30._0);
+   });
+   var getNumClicked = function (gems) {
+      getNumClicked: while (true) {
+         var _p32 = gems;
+         if (_p32.ctor === "[]") {
+               return -1;
+            } else {
+               if (_p32._0._1._1 === -1) {
+                     var _v90 = _p32._1;
+                     gems = _v90;
+                     continue getNumClicked;
+                  } else {
+                     return _p32._0._0;
+                  }
+            }
+      }
+   };
+   return _elm.Control.values = {_op: _op
+                                ,getNumClicked: getNumClicked
+                                ,mustGem: mustGem
+                                ,markAsClicked: markAsClicked
+                                ,markAsNeutral: markAsNeutral
+                                ,isNeighbor: isNeighbor
+                                ,clear: clear
+                                ,clearWithTime: clearWithTime
+                                ,allGone: allGone
+                                ,swap: swap
+                                ,scanH: scanH
+                                ,scanV: scanV
+                                ,elimBoard: elimBoard
+                                ,getSwapIndex: getSwapIndex
+                                ,flowDownOrRandom: flowDownOrRandom
+                                ,scanUp: scanUp
+                                ,updateBoard: updateBoard
+                                ,scanBoardForElims: scanBoardForElims
+                                ,hasElims: hasElims
+                                ,hasMoves: hasMoves
+                                ,isHintedBoard: isHintedBoard
+                                ,markGemsAsHints: markGemsAsHints
+                                ,checkForHints: checkForHints
+                                ,generateRandomBoard: generateRandomBoard
+                                ,rinseAndRepeat: rinseAndRepeat
+                                ,checkAndUpdateBoard: checkAndUpdateBoard};
+};

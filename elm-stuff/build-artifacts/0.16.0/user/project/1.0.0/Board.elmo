@@ -1,0 +1,200 @@
+Elm.Board = Elm.Board || {};
+Elm.Board.make = function (_elm) {
+   "use strict";
+   _elm.Board = _elm.Board || {};
+   if (_elm.Board.values) return _elm.Board.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Array = Elm.Array.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Color = Elm.Color.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $GemColor = Elm.GemColor.make(_elm),
+   $Graphics$Collage = Elm.Graphics.Collage.make(_elm),
+   $Graphics$Element = Elm.Graphics.Element.make(_elm),
+   $Graphics$Input = Elm.Graphics.Input.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm),
+   $Text = Elm.Text.make(_elm),
+   $Time = Elm.Time.make(_elm);
+   var _op = {};
+   var hand = F3(function (c,len,angle) {
+      return A2($Graphics$Collage.traced,
+      $Graphics$Collage.solid(c),
+      A2($Graphics$Collage.segment,{ctor: "_Tuple2",_0: 0,_1: 0},$Basics.fromPolar({ctor: "_Tuple2",_0: len,_1: angle})));
+   });
+   var clickMailbox = $Signal.mailbox(0);
+   var time = A3($Signal.foldp,F2(function (x,y) {    return x + y;}),0,$Time.fps(10));
+   var timestamp = function (sig) {
+      return A3($Signal.map2,F2(function (v0,v1) {    return {ctor: "_Tuple2",_0: v0,_1: v1};}),A2($Signal.sampleOn,sig,time),sig);
+   };
+   var clicks = timestamp(clickMailbox.signal);
+   var NewClick = function (a) {    return {ctor: "NewClick",_0: a};};
+   var NewTime = function (a) {    return {ctor: "NewTime",_0: a};};
+   var textStyle = {typeface: _U.list(["helvetica neue","helvetica","arial","sans-serif"])
+                   ,height: $Maybe.Just(50)
+                   ,color: $Color.lightRed
+                   ,bold: true
+                   ,italic: true
+                   ,line: $Maybe.Nothing};
+   var tCrush = 0.8 * $Time.second;
+   var spacing = 100;
+   var seed0 = 31415;
+   var secondsPerMin = 60;
+   var scoreUnit = 150;
+   var hintIndex = -4;
+   var restartButtonWidth = 180;
+   var restartButtonHeight = 70;
+   var restartIndex = -3;
+   var playTime = 90;
+   var timeRemaining = F2(function (time,roundStartTime) {    return $Basics.round(playTime - ($Time.inSeconds(time) - $Time.inSeconds(roundStartTime)));});
+   var noCrushHappening = -1;
+   var margin = 200;
+   var clockRad = 80;
+   var clockWidth = clockRad * 2 + 20;
+   var boardWidth = 6;
+   var boardContainerWidth = boardWidth * 110;
+   var initBoard = function () {
+      var foo = function (l) {
+         foo: while (true) if (_U.eq($List.length(l),boardWidth * boardWidth)) return l; else {
+               var _v0 = A2($List._op["::"],{ctor: "_Tuple2",_0: $GemColor.Green,_1: -1},l);
+               l = _v0;
+               continue foo;
+            }
+      };
+      return $Array.fromList(foo(_U.list([])));
+   }();
+   var initState = {ctor: "_Tuple2",_0: {ctor: "_Tuple2",_0: 0,_1: 0},_1: {ctor: "_Tuple2",_0: {ctor: "_Tuple2",_0: initBoard,_1: 0},_1: 0}};
+   var partitionGemsListByRow = function (xs) {
+      var _p0 = xs;
+      if (_p0.ctor === "[]") {
+            return _U.list([]);
+         } else {
+            return A2($List._op["::"],A2($List.take,boardWidth,xs),partitionGemsListByRow(A2($List.drop,boardWidth,xs)));
+         }
+   };
+   var drawGem = F3(function (now,roundStartTime,_p1) {
+      var _p2 = _p1;
+      var _p4 = _p2._0;
+      var _p3 = _p2._1._1;
+      var outline = A2($Graphics$Collage.outlined,$Graphics$Collage.solid($Color.yellow),$Graphics$Collage.square(80.0));
+      var timeRem = A2(timeRemaining,now,roundStartTime);
+      var timeElapsed = now - _p3;
+      var animationPercentComplete = timeElapsed / tCrush;
+      var sz = _U.eq(_p3,-2) ? 40 : _U.eq(_p3,-1) ? 60 : $Basics.round(60 - 60 * animationPercentComplete);
+      var imgForm = $Graphics$Collage.toForm(A3($Graphics$Element.image,sz,sz,A2($Basics._op["++"],"img/",$GemColor.toSrc(_p2._1._0))));
+      var img = _U.cmp(_p3,0) < 0 ? imgForm : A2($Graphics$Collage.alpha,1 - animationPercentComplete,imgForm);
+      var imgFade = _U.cmp(timeRem,0) < 1 ? A2($Graphics$Collage.alpha,0.5,img) : img;
+      var formList = _U.eq(_p3,-2) ? _U.list([imgFade,outline]) : _U.list([imgFade]);
+      var yPos = $Basics.toFloat(boardWidth - (_p4 / boardWidth | 0)) * spacing - margin;
+      var xPos = $Basics.toFloat(A2($Basics._op["%"],_p4,boardWidth) * spacing) - margin;
+      return A2($Graphics$Input.clickable,A2($Signal.message,clickMailbox.address,_p4),A3($Graphics$Collage.collage,spacing,spacing,formList));
+   });
+   var drawGemsList = F3(function (now,roundStartTime,board) {    return A2($List.map,A2(drawGem,now,roundStartTime),$Array.toIndexedList(board));});
+   var drawBoard = F3(function (now,roundStartTime,board) {
+      var xs = A3(drawGemsList,now,roundStartTime,board);
+      return A2($Graphics$Element.flow,
+      $Graphics$Element.down,
+      A2($List._op["::"],A2($Graphics$Element.spacer,250,5),A2($List.map,$Graphics$Element.flow($Graphics$Element.right),partitionGemsListByRow(xs))));
+   });
+   var drawState = function (_p5) {    var _p6 = _p5;var _p7 = _p6._1._0;return A3(drawBoard,_p6._0._0,_p6._0._1,_p7._0);};
+   var view = F2(function (_p8,st) {
+      var _p9 = _p8;
+      var _p11 = _p9._1;
+      var restartOutline = A2($Graphics$Collage.outlined,
+      $Graphics$Collage.solid($Color.lightRed),
+      A2($Graphics$Collage.rect,restartButtonWidth,restartButtonHeight));
+      var restartRect = A2($Graphics$Collage.filled,$Color.lightYellow,A2($Graphics$Collage.rect,restartButtonWidth,restartButtonHeight));
+      var _p10 = st;
+      var time = _p10._0._0;
+      var roundStartTime = _p10._0._1;
+      var board = _p10._1._0._0;
+      var score = _p10._1._0._1;
+      var highScore = _p10._1._1;
+      var timeRem = A2(timeRemaining,time,roundStartTime);
+      var timerString = _U.cmp(timeRem,0) > 0 ? A2($Basics._op["++"],"You have: ",A2($Basics._op["++"],$Basics.toString(timeRem)," s")) : "GAME OVER";
+      var timerText = $Graphics$Element.leftAligned(A2($Text.style,textStyle,$Text.fromString(timerString)));
+      var angle = $Basics.degrees(360 / playTime * $Basics.toFloat(timeRem) + 90);
+      var clock = A3($Graphics$Collage.collage,
+      clockWidth,
+      clockWidth,
+      _U.list([A2($Graphics$Collage.filled,$Color.lightYellow,$Graphics$Collage.circle(clockRad))
+              ,A2($Graphics$Collage.outlined,$Graphics$Collage.solid($Color.orange),$Graphics$Collage.circle(clockRad))
+              ,_U.cmp(timeRem,0) > 0 ? A3(hand,$Color.red,70,angle) : A3(hand,$Color.red,70,$Basics.degrees(90))]));
+      var restartText = $Graphics$Element.leftAligned(A2($Text.line,
+      $Text.Under,
+      A2($Text.height,
+      30,
+      A2($Text.color,$Color.lightRed,A2($Text.style,textStyle,_U.cmp(timeRem,0) < 1 ? $Text.fromString("Play Again") : $Text.fromString("Hint"))))));
+      var restartButtonImg = A3($Graphics$Collage.collage,
+      restartButtonWidth,
+      restartButtonHeight,
+      _U.list([restartRect,restartOutline,$Graphics$Collage.toForm(restartText)]));
+      var restartButton = function () {
+         var index = _U.cmp(timeRem,0) < 1 ? restartIndex : hintIndex;
+         return A4($Graphics$Input.customButton,A2($Signal.message,clickMailbox.address,index),restartButtonImg,restartButtonImg,restartButtonImg);
+      }();
+      var scoreString = A2($Basics._op["++"],"Score: ",$Basics.toString(score));
+      var scoreText = $Graphics$Element.leftAligned(A2($Text.style,textStyle,$Text.fromString(scoreString)));
+      var highScoreText = $Graphics$Element.leftAligned(A2($Text.style,
+      textStyle,
+      $Text.fromString(A2($Basics._op["++"],"Highscore: ",$Basics.toString(highScore)))));
+      return A4($Graphics$Element.container,
+      _p9._0,
+      _p11,
+      $Graphics$Element.middle,
+      A2($Graphics$Element.flow,
+      $Graphics$Element.right,
+      _U.list([A4($Graphics$Element.container,boardContainerWidth,_p11,$Graphics$Element.middle,drawState(st))
+              ,A4($Graphics$Element.container,
+              500,
+              _p11,
+              A2($Graphics$Element.midLeftAt,$Graphics$Element.absolute(50),$Graphics$Element.absolute(400)),
+              A2($Graphics$Element.flow,
+              $Graphics$Element.down,
+              _U.list([scoreText
+                      ,A2($Graphics$Element.spacer,10,20)
+                      ,timerText
+                      ,A2($Graphics$Element.spacer,10,20)
+                      ,clock
+                      ,A2($Graphics$Element.spacer,10,20)
+                      ,highScoreText
+                      ,A2($Graphics$Element.spacer,10,20)
+                      ,restartButton])))])));
+   });
+   return _elm.Board.values = {_op: _op
+                              ,boardWidth: boardWidth
+                              ,boardContainerWidth: boardContainerWidth
+                              ,clockRad: clockRad
+                              ,clockWidth: clockWidth
+                              ,margin: margin
+                              ,noCrushHappening: noCrushHappening
+                              ,playTime: playTime
+                              ,restartIndex: restartIndex
+                              ,restartButtonHeight: restartButtonHeight
+                              ,restartButtonWidth: restartButtonWidth
+                              ,hintIndex: hintIndex
+                              ,scoreUnit: scoreUnit
+                              ,secondsPerMin: secondsPerMin
+                              ,seed0: seed0
+                              ,spacing: spacing
+                              ,tCrush: tCrush
+                              ,textStyle: textStyle
+                              ,NewTime: NewTime
+                              ,NewClick: NewClick
+                              ,initBoard: initBoard
+                              ,initState: initState
+                              ,time: time
+                              ,clickMailbox: clickMailbox
+                              ,timestamp: timestamp
+                              ,clicks: clicks
+                              ,timeRemaining: timeRemaining
+                              ,hand: hand
+                              ,view: view
+                              ,drawState: drawState
+                              ,drawBoard: drawBoard
+                              ,partitionGemsListByRow: partitionGemsListByRow
+                              ,drawGemsList: drawGemsList
+                              ,drawGem: drawGem};
+};
