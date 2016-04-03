@@ -1,9 +1,10 @@
-Project: Elm-Bejeweled
-Team: sophiayang, ajchang
+Elm-Bejeweled
 
 Build instructions:
-- elm make Elm-Bejeweled.elm
-- Open index.html in a browser to play
+1. Install Elm (http://elm-lang.org/install)
+2. Clone this repo onto your local machine and cd into the directory
+3. Run "elm make Elm-Bejeweled.elm"
+4. Open index.html in a browser to play
 
 Summary:
 Our project was to make the game of Candy Crush in Elm.  Note that we renamed “Candy Crush” to “Bejeweled”, as the rules of these two popular games are identical, but Bejeweled makes more sense with our view.
@@ -45,7 +46,7 @@ The following is an overview of major features included in our game:
   a. The controller checks to see whether there is at least one possible move remaining in the board after every move.  If there are no valid moves remaining, then the current board will shrink and fade out, to be immediately replaced with a new randomly generated board, so that game-play can continue uninterrupted.
 
 6. Hints
-  a. When the “Hint” button is clicked, two adjacent gems will shrink and return to normal size in order to hint at a valid move for swapping. 
+  a. When the “Hint” button is clicked, two adjacent gems will shrink and return to normal size in order to hint at a valid move for swapping.
   b. Note that points will be deducted harshly from the current score every time a hint is requested.
   c. Hints cannot be requested while an existing animation is completing.
 
